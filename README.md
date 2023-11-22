@@ -1,4 +1,4 @@
-# lamp-AutoInstaller
+# lamp-AutoInstaller Ubuntu 18.04
 LAMP Auto Installer Script for >= Ubuntu 18.04
 
 ## Features
@@ -19,7 +19,7 @@ And execute this command
 wget -O install.sh "https://raw.githubusercontent.com/xoceunder/lemp/master/lemp18.4.sh" && chmod +x install.sh && ./install.sh
 ```
 
-# lamp-AutoInstaller
+# lamp-AutoInstaller Ubuntu 20.04
 LAMP Auto Installer Script for >= Ubuntu 20.04
 
 ## Features
