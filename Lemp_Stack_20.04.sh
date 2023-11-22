@@ -30,7 +30,7 @@ printc() {
     echo " "
 }
 
-printc "Auto Install LEMP Stack as Nginx - MariaDB - PHP Sistem ${Version}" ${GREEN} 2
+printc "Auto Install LEMP Stack as Nginx MariaDB PHP Sistem ${Version}" ${GREEN} 2
 echo -n "Installation System? [Y/n]? "
 read -n1 type
 echo -en "\ec"
