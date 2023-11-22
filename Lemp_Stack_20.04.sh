@@ -62,29 +62,6 @@ if [[ "$type" = "Y" || "$type" = "y" ]]; then
 	
     printc "Installing MariaDB v10.3 " ${YELLOW}
 	sudo apt install mariadb-server -y > /dev/null 2>&1
-    echo "mysql-server mysql-server/root_password password $pass" | debconf-set-selections
-    echo "mysql-server mysql-server/root_password_again password $pass" | debconf-set-selections
-    expsql=$(expect -c '
-    set timeout 10
-    spawn mysql_secure_installation
-    expect "Enter password for user root:"
-    send "'$pass'\r"
-    expect "Press y|Y for Yes, any other key for No:"
-    send "y\r"
-    expect "Please enter 0 = LOW, 1 = MEDIUM and 2 = STRONG:"
-    send "2\r"
-    expect "Change the password for root ? ((Press y|Y for Yes, any other key for No) :"
-    send "n\r"
-    expect "Remove anonymous users? (Press y|Y for Yes, any other key for No) :"
-    send "y\r"
-    expect "Disallow root login remotely? (Press y|Y for Yes, any other key for No) :"
-    send "y\r"
-    expect "Remove test database and access to it? (Press y|Y for Yes, any other key for No) :"
-    send "y\r"
-    expect "Reload privilege tables now? (Press y|Y for Yes, any other key for No) :"
-    send "y\r"
-    expect eof ')
-    echo "$expsql" > /dev/null 2>&1
     systemctl start mariadb > /dev/null 2>&1
     systemctl enable mariadb > /dev/null 2>&1
     sudo apt purge expect -y > /dev/null 2>&1
