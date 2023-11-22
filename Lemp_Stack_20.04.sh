@@ -35,9 +35,9 @@ echo -n "Installation System? [Y/n]? "
 read -n1 type
 echo -en "\ec"
 if [[ "$type" = "Y" || "$type" = "y" ]]; then
-printc "Update System" ${YELLOW}
-sudo apt update > /dev/null 2>&1
-sudo apt full-upgrade -y > /dev/null 2>&1
+ printc "Update System" ${YELLOW}
+ sudo apt update > /dev/null 2>&1
+ sudo apt full-upgrade -y > /dev/null 2>&1
 
  if [ $? -eq 0 ]; then
   echo -en "\ec"
@@ -47,6 +47,10 @@ sudo apt full-upgrade -y > /dev/null 2>&1
   if [ -n "${pass}" ] && [[ ! "$pass" =~ ^[[:digit:]]+$ ]]; then
     echo -en "\ec"
     printc "Installing Nginx v1.19 " ${YELLOW}
+	sudo apt install curl gnupg2 ca-certificates lsb-release -y > /dev/null 2>&1
+	curl -fsSL https://nginx.org/keys/nginx_signing.key | sudo apt-key add - > /dev/null 2>&1
+	echo "deb [arch=amd64] http://nginx.org/packages/mainline/ubuntu focal nginx" | sudo tee /etc/apt/sources.list.d/nginx.list > /dev/null 2>&1
+    sudo apt update > /dev/null 2>&1	
     sudo apt install nginx -y > /dev/null 2>&1
     sudo systemctl start nginx > /dev/null 2>&1
     sudo systemctl enable nginx > /dev/null 2>&1
