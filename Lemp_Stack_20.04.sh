@@ -64,6 +64,7 @@ if [[ "$type" = "Y" || "$type" = "y" ]]; then
 	sudo apt install mariadb-server -y > /dev/null 2>&1
     systemctl start mariadb > /dev/null 2>&1
     systemctl enable mariadb > /dev/null 2>&1
+	mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$pass'; flush privileges;" > /dev/null 2>&1
     sudo apt purge expect -y > /dev/null 2>&1
 	sudo apt autoremove -y > /dev/null 2>&1
 	
@@ -95,7 +96,6 @@ if [[ "$type" = "Y" || "$type" = "y" ]]; then
     sudo sed -i '2,$ s/max_execution_time = 30/max_execution_time = 300/' /etc/php/8.2/fpm/php.ini
     sudo sed -i '2,$ s/upload_max_filesize = 2M/upload_max_filesize = 200M/' /etc/php/8.2/fpm/php.ini
     sudo sed -i '2,$ s/display_errors = Off/display_errors = On/' /etc/php/8.2/fpm/php.ini
-	sudo sed -i '2,$ s/listen = /run/php/php8.2-fpm.sock/listen = 127.0.0.1:9000/' /etc/php/8.2/fpm/pool.d/www.conf
 	
     printc "Restart Nginx - MariaDB - Php  " ${YELLOW}
     sudo systemctl restart php8.2-fpm > /dev/null 2>&1
