@@ -69,6 +69,7 @@ if [[ "$type" = "Y" || "$type" = "y" ]]; then
 	
     printc "Installing PHP v8.2" ${YELLOW}
 	sudo add-apt-repository ppa:ondrej/php -y > /dev/null 2>&1
+	sudo apt update > /dev/null 2>&1
 	sudo apt install php8.2 php8.2-{cli,fpm,curl,mysql,mysqlnd,gd,opcache,zip,intl,common,bcmath,imagick,xmlrpc,readline,memcached,redis,mbstring,apcu,xml,dom,memcache,fileinfo} php-pear -y > /dev/null 2>&1
     systemctl start php8.2-fpm > /dev/null 2>&1
     systemctl enable php8.2-fpm > /dev/null 2>&1
