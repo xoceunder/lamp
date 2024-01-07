@@ -46,8 +46,8 @@ if [[ "$type" = "Y" || "$type" = "y" ]]; then
   
   if [ -n "${pass}" ] && [[ ! "$pass" =~ ^[[:digit:]]+$ ]]; then
     echo -en "\ec"
-    printc "Installing Nginx v1.19 " ${YELLOW}
-	sudo apt install curl gnupg2 ca-certificates lsb-release -y > /dev/null 2>&1
+    printc "Installing Nginx v1.25 " ${YELLOW}
+	sudo apt install curl gnupg2 ca-certificates apt-transport-https software-properties-common lsb-release -y > /dev/null 2>&1
 	curl -fsSL https://nginx.org/keys/nginx_signing.key | sudo apt-key add - > /dev/null 2>&1
 	echo "deb [arch=amd64] http://nginx.org/packages/mainline/ubuntu focal nginx" | sudo tee /etc/apt/sources.list.d/nginx.list > /dev/null 2>&1
     sudo apt update > /dev/null 2>&1	
@@ -65,13 +65,13 @@ if [[ "$type" = "Y" || "$type" = "y" ]]; then
     systemctl start mariadb > /dev/null 2>&1
     systemctl enable mariadb > /dev/null 2>&1
     sudo apt purge expect -y > /dev/null 2>&1
-	sudo apt autoremove -y
+	sudo apt autoremove -y > /dev/null 2>&1
 	
-    printc "Installing PHP v7.4" ${YELLOW}
-	sudo apt install libapache2-mod-fcgid -y > /dev/null 2>&1
-    sudo apt install php7.2 php7.2-fpm php7.2-cli php7.2-curl php7.2-mysql php7.2-curl php7.2-gd php7.2-mbstring php-pear -y > /dev/null 2>&1
-    systemctl start php7.4-fpm > /dev/null 2>&1
-    systemctl enable php7.4-fpm > /dev/null 2>&1
+    printc "Installing PHP v8.2" ${YELLOW}
+	sudo add-apt-repository ppa:ondrej/php -y > /dev/null 2>&1
+	sudo apt install php8.2 php8.2-{cli,fpm,curl,mysql,mysqlnd,gd,opcache,zip,intl,common,bcmath,imagick,xmlrpc,readline,memcached,redis,mbstring,apcu,xml,dom,memcache,fileinfo} php-pear -y > /dev/null 2>&1
+    systemctl start php8.2-fpm > /dev/null 2>&1
+    systemctl enable php8.2-fpm > /dev/null 2>&1
 	
     printc "Install PhpMyAdmin" ${YELLOW}
     sudo apt install zip -y > /dev/null 2>&1
@@ -89,15 +89,15 @@ if [[ "$type" = "Y" || "$type" = "y" ]]; then
     printc "Configuring System" ${YELLOW}
     mkdir /home/www > /dev/null 2>&1
     sudo chown -R www-data:www-data /home/www > /dev/null 2>&1
-    sudo sed -i 's/keepalive_timeout 65;/keepalive_timeout 2;/' /etc/nginx/nginx.conf
-    sudo sed -i 's/# server_tokens off;/server_tokens off;/' /etc/nginx/nginx.conf
-    sudo sed -i 's/max_execution_time = 30/max_execution_time = 300/' /etc/php/7.4/fpm/php.ini
-    sudo sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 200M/' /etc/php/7.4/fpm/php.ini
-    sudo sed -i 's/display_errors = Off/display_errors = On/' /etc/php/7.4/fpm/php.ini
-    sudo sed -i 's/listen = /run/php/php7.4-fpm.sock/listen = 127.0.0.1:9000/' /etc/php/7.4/fpm/pool.d/www.conf
+    sudo sed -i '2,$ s/keepalive_timeout 65;/keepalive_timeout 2;/' /etc/nginx/nginx.conf
+    sudo sed -i '2,$ s/# server_tokens off;/server_tokens off;/' /etc/nginx/nginx.conf
+    sudo sed -i '2,$ s/max_execution_time = 30/max_execution_time = 300/' /etc/php/8.2/fpm/php.ini
+    sudo sed -i '2,$ s/upload_max_filesize = 2M/upload_max_filesize = 200M/' /etc/php/8.2/fpm/php.ini
+    sudo sed -i '2,$ s/display_errors = Off/display_errors = On/' /etc/php/8.2/fpm/php.ini
+	sudo sed -i '2,$ s/listen = /run/php/php8.2-fpm.sock/listen = 127.0.0.1:9000/' /etc/php/8.2/fpm/pool.d/www.conf
 	
     printc "Restart Nginx - MariaDB - Php  " ${YELLOW}
-    sudo systemctl restart php7.4-fpm > /dev/null 2>&1
+    sudo systemctl restart php8.2-fpm > /dev/null 2>&1
     sudo systemctl restart nginx > /dev/null 2>&1
     sudo systemctl restart mariadb > /dev/null 2>&1
 
