@@ -23,8 +23,8 @@ wget -O install.sh "https://raw.githubusercontent.com/xoceunder/lemp/master/lemp
 LAMP Auto Installer Script for >= Ubuntu 20.04
 
 ## Features
-* Nginx v1.19
-* PHP v7.4
+* Nginx v1.25
+* PHP v8.2
 * MariaDB v10.3
 * phpMyAdmin
 * Other? Request via issue.
