@@ -26,7 +26,7 @@ LAMP Auto Installer Script for >= Ubuntu 20.04
 * Nginx v1.25
 * PHP v8.2
 * MariaDB v10.3
-* phpMyAdmin
+* phpMyAdmin v5.2
 * Other? Request via issue.
 
 ## Quick Setup
