@@ -58,6 +58,7 @@ if [[ "$type" = "Y" || "$type" = "y" ]]; then
     printc "Configure the Firewall Add the SSH and HTTP" ${YELLOW}
     sudo ufw allow ssh > /dev/null 2>&1
     sudo ufw allow http > /dev/null 2>&1
+    sudo ufw allow https > /dev/null 2>&1
     sudo ufw enable -y > /dev/null 2>&1
 	
     printc "Installing MariaDB v10.3 " ${YELLOW}
