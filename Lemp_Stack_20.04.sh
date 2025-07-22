@@ -48,8 +48,8 @@ if [[ "$type" = "Y" || "$type" = "y" ]]; then
     echo -en "\ec"
     printc "Installing Nginx v1.25 " ${YELLOW}
 	sudo apt install curl gnupg2 ca-certificates apt-transport-https software-properties-common lsb-release -y > /dev/null 2>&1
-	curl -fsSL https://nginx.org/keys/nginx_signing.key | sudo apt-key add - > /dev/null 2>&1
-	echo "deb [arch=amd64] http://nginx.org/packages/mainline/ubuntu focal nginx" | sudo tee /etc/apt/sources.list.d/nginx.list > /dev/null 2>&1
+	curl -fsSL https://nginx.org/keys/nginx_signing.key  | sudo gpg --dearmor -o /usr/share/keyrings/nginx-keyring.gpg > /dev/null 2>&1
+	echo "deb [arch=amd64 signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://nginx.org/packages/ubuntu `lsb_release -cs` nginx" | sudo tee /etc/apt/sources.list.d/nginx.list > /dev/null 2>&1
     sudo apt update > /dev/null 2>&1	
     sudo apt install nginx -y > /dev/null 2>&1
     sudo systemctl start nginx > /dev/null 2>&1
