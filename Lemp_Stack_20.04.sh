@@ -52,8 +52,8 @@ if [[ "$type" = "Y" || "$type" = "y" ]]; then
 	echo "deb [arch=amd64 signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://nginx.org/packages/ubuntu `lsb_release -cs` nginx" | sudo tee /etc/apt/sources.list.d/nginx.list > /dev/null 2>&1
     sudo apt update > /dev/null 2>&1	
     sudo apt install nginx -y > /dev/null 2>&1
-    sudo systemctl start nginx > /dev/null 2>&1
     sudo systemctl enable nginx > /dev/null 2>&1
+    sudo systemctl start nginx > /dev/null 2>&1
 	
     printc "Configure the Firewall Add the SSH and HTTP" ${YELLOW}
     sudo ufw allow ssh > /dev/null 2>&1
