@@ -15,7 +15,7 @@ Download or copy `lamp-ubuntu.sh` to your Ubuntu machine. From the directory con
 
 ```bash
 wget -O install.sh "https://raw.githubusercontent.com/xoceunder/lamp/master/lamp-ubuntu.sh" && chmod +x install.sh && ./install.sh
-``
+```
 
 Select **1** for Apache or **2** for Nginx. Select **0** to cancel. To skip the menu, run either command:
 
