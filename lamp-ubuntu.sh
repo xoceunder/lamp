@@ -25,23 +25,34 @@ die() {
     exit 1
 }
 
-case "${1:-}" in
-    -h|--help)
-        cat <<'HELP'
-Uso: sudo bash lamp-ubuntu.sh [--apache|--nginx]
-Sin opciones, el instalador pregunta qué servidor web instalar.
+server=
+protocol=
+domain=
+email=
+while (( $# )); do
+    case "$1" in
+        -h|--help)
+            cat <<'HELP'
+Uso: sudo bash lamp-ubuntu.sh [--apache|--nginx] [--http|--https]
+HTTPS sin preguntas: --nginx --https --domain ejemplo.com --email admin@ejemplo.com
+Sin opciones, el instalador muestra los menús. Sin terminal, el protocolo
+predeterminado es HTTP. HTTPS requiere un dominio público que apunte al VPS.
 Ubuntu 18.04 o posterior con systemd y repositorios APT operativos.
-Instala PHP, MariaDB y phpMyAdmin con los paquetes de APT.
-Reutiliza MariaDB si ya está instalado. phpMyAdmin queda accesible localmente. Conserva las contraseñas y las reglas del firewall.
 HELP
-        exit 0
-        ;;
-    --apache) server=apache2 ;;
-    --nginx) server=nginx ;;
-    '') server= ;;
-    *) die "Opción desconocida: $1. Consulta --help." ;;
-esac
-(( $# <= 1 )) || die 'Consulta --help para ver el uso.'
+            exit 0
+            ;;
+        --apache) server=apache2 ;;
+        --nginx) server=nginx ;;
+        --http|--https) protocol=${1#--} ;;
+        --domain|--email)
+            (( $# >= 2 )) && [[ $2 != --* ]] || die "Falta el valor para $1."
+            if [[ $1 == --domain ]]; then domain=$2; else email=$2; fi
+            shift
+            ;;
+        *) die "Opción desconocida: $1. Consulta --help." ;;
+    esac
+    shift
+done
 
 (( EUID == 0 )) || die 'Ejecuta el instalador con sudo.'
 [[ -r /etc/os-release ]] || die 'No se pudo identificar el sistema operativo.'
@@ -66,6 +77,38 @@ if [[ -z $server ]]; then
             *) printf '%s\n' 'Selecciona 1, 2 o 0.' ;;
         esac
     done
+fi
+
+if [[ -z $protocol ]]; then
+    protocol=http
+    if [[ -t 0 ]]; then
+        printc "Protocolo del sitio web"
+        printf '%s\n' '1) HTTP' '2) HTTPS (Certbot)' '0) Cancelar'
+        while true; do
+            read -r -p 'Selecciona [1/2/0, predeterminado 1]: ' choice || exit 1
+            case "$choice" in
+                1|'') break ;;
+                2) protocol=https; break ;;
+                0) exit 0 ;;
+                *) printf '%s\n' 'Selecciona 1, 2 o 0.' ;;
+            esac
+        done
+    fi
+fi
+
+if [[ $protocol == https ]]; then
+    if [[ -t 0 ]]; then
+        printf '%s\n' 'HTTPS requiere que el dominio apunte al VPS y que los puertos 80 y 443 sean accesibles.'
+        if [[ -z $domain ]]; then read -r -p 'Dominio (ejemplo.com): ' domain || exit 1; fi
+        if [[ -z $email ]]; then read -r -p 'Correo para Let’s Encrypt: ' email || exit 1; fi
+    fi
+    domain=${domain,,}
+    [[ ${#domain} -le 253 && $domain =~ ^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]([a-z0-9-]{0,61}[a-z0-9])?$ ]] ||
+        die 'Indica un dominio válido con --domain, sin http:// ni rutas.'
+    [[ $email =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]] ||
+        die 'Indica un correo válido con --email.'
+elif [[ -n $domain || -n $email ]]; then
+    die 'Usa --domain y --email con --https.'
 fi
 
 trap 'printf "Instalación interrumpida en la línea %s (código %s).\n" "$LINENO" "$?" >&2' ERR
@@ -366,6 +409,71 @@ PHP
     rm -f -- "$probe"
     trap - EXIT
     printf 'PHP web %s\n' "$php_web_version"
+fi
+
+if [[ $protocol == https ]]; then
+    printc "Instalando Certbot para $server" 33
+
+    # El sitio con nombre vive aparte del predeterminado que regenera el instalador.
+    # Si ya existe un sitio para este dominio, Certbot puede usarlo directamente.
+    if [[ $server == apache2 ]]; then
+        plugin=apache
+        site_dir=/etc/apache2/sites-available
+        enabled_dir=/etc/apache2/sites-enabled
+        config_test=(apache2ctl configtest)
+        named_hosts=$(apache2ctl -S 2>/dev/null)
+    else
+        plugin=nginx
+        site_dir=/etc/nginx/sites-available
+        enabled_dir=/etc/nginx/sites-enabled
+        config_test=(nginx -t)
+        named_hosts=$(nginx -T 2>/dev/null)
+    fi
+
+    install_packages certbot "python3-certbot-$plugin" || die "APT no pudo instalar Certbot para $server."
+
+    if ! awk -v domain="$domain" '
+        $1 == "server_name" || $1 == "alias" || $1 == "port" || $1 ~ /:[0-9]+$/ || $2 == "is" {
+            for (i = 2; i <= NF; i++) {
+                sub(/;$/, "", $i)
+                if (tolower($i) == domain) found = 1
+            }
+        }
+        END { exit !found }
+    ' <<< "$named_hosts"; then
+        site="$site_dir/lamp-ubuntu-$domain.conf"
+        enabled="$enabled_dir/lamp-ubuntu-$domain.conf"
+        [[ ! -e $site && ! -L $site && ! -e $enabled && ! -L $enabled ]] ||
+            die "Revisa el sitio existente en $site antes de activar HTTPS."
+        if [[ $server == apache2 ]]; then
+            cat > "$site" <<APACHE
+# Administrado por lamp-ubuntu.sh
+<VirtualHost *:80>
+    ServerName $domain
+    DocumentRoot /var/www/html
+    DirectoryIndex index.php index.html
+</VirtualHost>
+APACHE
+        else
+            sed -e 's/ default_server;/;/' -e "s/server_name _;/server_name $domain;/" "$nginx_site" > "$site"
+        fi
+        if ! ln -s -- "$site" "$enabled"; then
+            rm -f -- "$site"
+            die "No se pudo habilitar el sitio para $domain."
+        fi
+        if ! "${config_test[@]}" > /dev/null 2>&1 ||
+           ! systemctl reload "$server.service" > /dev/null 2>&1; then
+            rm -f -- "$enabled" "$site"
+            die "No se pudo cargar el sitio para $domain. Se retiró la configuración nueva."
+        fi
+    fi
+
+    printc "Activando HTTPS para $domain" 33
+    if ! certbot "--$plugin" --non-interactive --agree-tos --email "$email" \
+        --redirect --keep-until-expiring -d "$domain" > /dev/null 2>&1; then
+        die 'Certbot no pudo completar HTTPS. Revisa el DNS, el acceso al puerto 80 y /var/log/letsencrypt/letsencrypt.log.'
+    fi
+    printf 'Sitio HTTPS: https://%s/\n' "$domain"
 fi
 
 printc "Instalación completada" 32
