@@ -17,12 +17,24 @@ Download or copy `lamp-ubuntu.sh` to your Ubuntu machine. From the directory con
 wget -O install.sh "https://raw.githubusercontent.com/xoceunder/lamp/master/lamp-ubuntu.sh" && chmod +x install.sh && ./install.sh
 ```
 
-Select **1** for Apache or **2** for Nginx. Select **0** to cancel. To skip the menu, run either command:
+Select **1** for Apache or **2** for Nginx, then choose HTTP or HTTPS. Select **0** to cancel. For an unattended HTTP installation, run either command:
 
 ```bash
 sudo bash install.sh --apache
 sudo bash install.sh --nginx
 ```
+
+## HTTPS with Let’s Encrypt
+
+Point your domain to the VPS and make TCP ports 80 and 443 reachable before running the installer. If you publish an IPv6 DNS record, ensure it also reaches the VPS. Choose HTTPS and enter a domain and contact email. The installer uses Certbot to configure HTTPS and redirect that domain’s HTTP traffic to HTTPS.
+
+For unattended installation, supply the domain and email explicitly:
+
+```bash
+sudo bash install.sh --apache --https --domain example.com --email admin@example.com
+```
+
+Use `--nginx` for Nginx. Choosing HTTP skips certificate setup and preserves any HTTPS configuration already in place. If issuing a certificate fails, see `/var/log/letsencrypt/letsencrypt.log`.
 
 ## What the installer does
 
